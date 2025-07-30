@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS Dashboard - Incident Response Information System</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <header class="dashboard-header">
+            <div class="container header-content">
+                <div class="logo-title">
+                    <i class="fas fa-shield-halved logo-icon"></i>
+                    <h1>IRIS Dashboard</h1>
+                </div>
+                <div id="overall-status" class="overall-status-chip">
+                    <span class="status-dot"></span>
+                    <span id="system-status-text">Memuat...</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="container dashboard-main">
+            <div id="roomsGrid" class="rooms-grid">
+                <div id="loadingPlaceholder" class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>Memuat data ruangan...</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="dashboard-footer">
+            <p>&copy; <span id="currentYear"></span> Sistem Peringatan Kebakaran Perkantoran Anda. Didesain untuk Keselamatan.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='chart.js') }}"></script>
+</body>
+</html>
