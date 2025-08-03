@@ -61,9 +61,9 @@ The system is designed for an **on-premise deployment**. The server components r
 - **Frontend:** HTML, CSS, JavaScript
 - **Data Visualization:** Chart.js, Luxon.js
 - **AI & Machine Learning:** Google Gemini, OpenCV, Ultralytics YOLOv8
-- **AI Voice Platform:** Retell AI
+- **AI Voice Platform:** Google Dialogflow (Retell AI for Development)
 - **Automation & Orchestration:** n8n.io
-- **Database:** SQLite
+- **Database:** PostgreSQL (SQLite for development)
 - **Containerization:** Docker (recommended for production)
 
 ---

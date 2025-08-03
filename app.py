@@ -8,7 +8,8 @@ import sqlite3
 import subprocess 
 import sys 
 import shutil 
-import os     
+import os
+import random     
 
 app = Flask(__name__)
 
@@ -25,7 +26,7 @@ INCIDENT_DB_NAME = 'incident_details.db'
 INCIDENT_DB_COPY_NAME = 'incident_details_llm_copy.db'
 
 SOURCE_DB_PATH = DATABASE_NAME
-DEST_DB_FOLDER = 'retell-custom-llm-python-demo'
+DEST_DB_FOLDER = 'custom-llm-python-demo'
 DEST_DB_NAME = 'fire_incident_llm_copy.db'
 DEST_DB_PATH = os.path.join(DEST_DB_FOLDER, DEST_DB_NAME)
 COPY_INTERVAL_SECONDS = 3
@@ -33,7 +34,7 @@ COPY_INTERVAL_SECONDS = 3
 SOURCE_INCIDENT_DB_PATH = INCIDENT_DB_NAME
 DEST_INCIDENT_DB_PATH = os.path.join(DEST_DB_FOLDER, INCIDENT_DB_COPY_NAME)
 
-MANUAL_ROOM_LIST = ["B001", "R101", "R103", "R202", "R203", "R207", "R301"]
+MANUAL_ROOM_LIST = ["B001", "R101", "R103", "R202", "R207", "R301"]
 
 # --- In-Memory Data & State Storage ---
 sensor_data_storage = {}
@@ -186,9 +187,21 @@ def receive_sensor_data():
         if smoke_value is not None and smoke_value > SMOKE_THRESHOLD: alert_reasons_list.append(f"Smoke Detected")
 
         if alert_reasons_list:
+            # This is the first time any room has triggered a fire alert in this session
             if not fire_alert_has_occurred:
                 print("SERVER: !!! FIRST FIRE DETECTED !!! Emergency mode activated.")
                 fire_alert_has_occurred = True
+                # Run the simulation detector script in the background ONCE
+                with process_lock:
+                    if not detection_process_started:
+                        print("SERVER: Fire condition detected. Attempting to run simulation detection script...")
+                        try:
+                            # Use Popen to run in the background and not wait for it
+                            subprocess.Popen([sys.executable, DETECTOR_SCRIPT_PATH])
+                            detection_process_started = True 
+                            print(f"SERVER: Script '{DETECTOR_SCRIPT_PATH}' executed successfully.")
+                        except Exception as e:
+                            print(f"SERVER ERROR: Failed to execute detector.py script: {e}", file=sys.stderr)
 
             current_status = "ALERT_FIRE"
             details_message = f"FIRE! {', '.join(alert_reasons_list)}"
@@ -207,16 +220,6 @@ def receive_sensor_data():
                         print(f"SERVER: First incident detail for {room_id} has been logged in '{INCIDENT_DB_NAME}'.")
                     except Exception as e:
                         print(f"SERVER ERROR: Failed to log first incident data: {e}", file=sys.stderr)
-
-            with process_lock:
-                if not detection_process_started:
-                    print("SERVER: Fire condition detected. Attempting to run detection script...")
-                    try:
-                        subprocess.Popen([sys.executable, DETECTOR_SCRIPT_PATH])
-                        detection_process_started = True 
-                        print(f"SERVER: Script '{DETECTOR_SCRIPT_PATH}' executed successfully.")
-                    except Exception as e:
-                        print(f"SERVER ERROR: Failed to execute detector.py script: {e}", file=sys.stderr)
         else:
             # If the status of this room is ALREADY fire detected, DO NOT change it back to NORMAL.
             # Let the status be locked as ALERT_FIRE.
@@ -254,6 +257,15 @@ def get_live_data():
 
     for room_id, status_info in room_statuses.items():
         data_list = sensor_data_storage.get(room_id, [])
+        
+        # Cek apakah gambar deteksi ada jika alarm kebakaran telah terpicu
+        detection_image_url = None
+        if fire_alert_has_occurred:
+            potential_image_path = os.path.join('static', 'detected_images', f'{room_id}.jpg')
+            if os.path.exists(potential_image_path):
+                # Buat URL yang bisa diakses oleh browser
+                detection_image_url = f'/static/detected_images/{room_id}.jpg?t={time.time()}' # Tambahkan timestamp untuk cache busting
+
         response_data[room_id] = {
             "status": status_info.get("status", "UNKNOWN"),
             "details": status_info.get("details", ""),
@@ -261,6 +273,7 @@ def get_live_data():
             "temperature_current": status_info.get("temp_current"),
             "smoke_current": status_info.get("smoke_current"),
             "people_count": people_counts.get(room_id, -1),
+            "detection_image_url": detection_image_url, # Tambahkan URL gambar ke response
             "labels": [datetime.datetime.fromisoformat(d['timestamp']).strftime('%H:%M:%S') for d in data_list],
             "temperatures": [d['temperature'] for d in data_list],
             "smokeValues": [d['smokeValue'] for d in data_list]

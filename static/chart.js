@@ -99,31 +99,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h2><i class="fas fa-broadcast-tower"></i> ${roomId.replace(/_/g, ' ')}</h2>
                 <span class="status-badge" id="status-${roomId}">MEMUAT...</span>
             </div>
-            <div class="sensor-readings">
-                <div class="sensor-reading-item">
-                    <i class="fas fa-temperature-half temp-icon"></i>
-                    Suhu
-                    <span class="value" id="temp-${roomId}">N/A</span>
+            <div class="card-content-wrapper">
+                <div class="sensor-and-chart-column">
+                    <div class="sensor-readings">
+                        <div class="sensor-reading-item">
+                            <i class="fas fa-temperature-half temp-icon"></i>
+                            Suhu
+                            <span class="value" id="temp-${roomId}">N/A</span>
+                        </div>
+                        <div class="sensor-reading-item">
+                            <i class="fas fa-smog smoke-icon"></i>
+                            Asap
+                            <span class="value" id="smoke-${roomId}">N/A</span>
+                        </div>
+                    </div>
+                    <div class="people-detection-reading" id="people-reading-${roomId}" style="display: none;">
+                        <i class="fas fa-users people-icon"></i>
+                        Orang Terdeteksi
+                        <span class="value" id="people-${roomId}">N/A</span>
+                    </div>
+                    <div class="chart-group">
+                        <div class="chart-container">
+                            <canvas id="chart-${roomId}-temp"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-group">
+                        <div class="chart-container">
+                            <canvas id="chart-${roomId}-smoke"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div class="sensor-reading-item">
-                    <i class="fas fa-smog smoke-icon"></i>
-                    Asap
-                    <span class="value" id="smoke-${roomId}">N/A</span>
-                </div>
-            </div>
-            <div class="people-detection-reading" id="people-reading-${roomId}" style="display: none;">
-                <i class="fas fa-users people-icon"></i>
-                Orang Terdeteksi
-                <span class="value" id="people-${roomId}">N/A</span>
-            </div>
-            <div class="chart-group">
-                <div class="chart-container">
-                    <canvas id="chart-${roomId}-temp"></canvas>
-                </div>
-            </div>
-            <div class="chart-group">
-                <div class="chart-container">
-                    <canvas id="chart-${roomId}-smoke"></canvas>
+                <div class="detection-image-column" id="image-column-${roomId}" style="display: none;">
+                    <div class="detection-image-container" id="image-container-${roomId}">
+                        <img src="" alt="Deteksi Ruangan ${roomId}" id="image-${roomId}">
+                        <div class="image-overlay">Gambar Deteksi</div>
+                    </div>
                 </div>
             </div>
             <div class="card-footer">
@@ -197,6 +207,19 @@ document.addEventListener('DOMContentLoaded', function () {
             peopleReadingContainer.style.display = 'flex';
         } else {
             peopleReadingContainer.style.display = 'none';
+        }
+
+        // Logika untuk menampilkan gambar deteksi
+        const imageColumn = document.getElementById(`image-column-${roomId}`);
+        const imageEl = document.getElementById(`image-${roomId}`);
+        if (fireAlertEverTriggered && data.detection_image_url) {
+            imageColumn.style.display = 'flex';
+            // Hanya perbarui src jika berbeda untuk menghindari kedipan yang tidak perlu
+            if (imageEl.src !== data.detection_image_url) {
+                imageEl.src = data.detection_image_url;
+            }
+        } else {
+            imageColumn.style.display = 'none';
         }
 
         if (roomCharts[roomId] && roomCharts[roomId].tempChart) {
